@@ -1,8 +1,24 @@
-import { useEffect, useState } from "react";
-import { getProducts,createProduct } from "../services/productservice";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getProducts, createProduct } from "../services/productservice";
 import "./Products.css";
 
 function Products() {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stock_quantity: "",
+    category: "",
+    is_available: true,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [submitStatus, setSubmitStatus] = useState("");
+
   const getProductImage = (p) => {
     const key = (p.category || p.name || "").toLowerCase();
     if (key.includes("milk")) {
@@ -19,27 +35,15 @@ function Products() {
     }
     return "https://images.unsplash.com/photo-1525253086316-d0c936c814f8?q=80&w=1200&auto=format&fit=crop";
   };
-  const [products, setProducts] = useState([]);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    price: "",
-    stock_quantity: "",
-    category: "",
-    is_available: true,
-  });
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  // Fetch products
   const fetchProducts = async () => {
     try {
       const response = await getProducts();
       setProducts(response.data);
-      setLoading(false);
+      setError("");
     } catch (err) {
       setError("Failed to fetch products");
+    } finally {
       setLoading(false);
     }
   };
@@ -48,22 +52,21 @@ function Products() {
     fetchProducts();
   }, []);
 
-  // Handle input
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? checked : value,
-    });
+    }));
   };
 
-  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitStatus("");
 
     try {
       await createProduct(formData);
-      fetchProducts(); // refresh
+      await fetchProducts();
       setFormData({
         name: "",
         description: "",
@@ -72,114 +75,179 @@ function Products() {
         category: "",
         is_available: true,
       });
+      setSubmitStatus("Product created successfully.");
     } catch (err) {
       setError("Failed to create product");
     }
   };
 
+  const filteredProducts = useMemo(() => {
+    if (!search.trim()) return products;
+    const keyword = search.toLowerCase();
+    return products.filter((product) =>
+      `${product.name} ${product.category} ${product.description}`
+        .toLowerCase()
+        .includes(keyword)
+    );
+  }, [products, search]);
+
+  const stats = useMemo(() => {
+    const inStock = products.filter((p) => p.is_available).length;
+    const totalValue = products.reduce(
+      (sum, p) => sum + Number(p.price || 0) * Number(p.stock_quantity || 0),
+      0
+    );
+    return {
+      total: products.length,
+      inStock,
+      outOfStock: products.length - inStock,
+      totalValue,
+    };
+  }, [products]);
+
   return (
-    <>
-      <header className="hero-products">
-        <div className="hero-content">
-          <h1>Explore Our Dairy Selection</h1>
-          <p>Fresh, reliable, and delivered daily. Find your favorites below.</p>
+    <div className="products-page">
+      <header className="products-topbar">
+        <div className="shell products-topbar-inner">
+          <button className="brand-btn" onClick={() => navigate("/")}>
+            Milkman Admin
+          </button>
+          <button className="back-btn" onClick={() => navigate("/")}>
+            Back to Landing
+          </button>
         </div>
       </header>
-      <div className="products-container">
-        <h1 className="title">Products</h1>
 
-        <form className="product-form" onSubmit={handleSubmit}>
-          <input
-            name="name"
-            placeholder="Product Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+      <section className="products-hero shell">
+        <h1>Product Management</h1>
+        <p>
+          Add, review, and track dairy products from one clean dashboard.
+        </p>
+        <div className="stat-row">
+          <div className="stat-card">
+            <span>Total Products</span>
+            <strong>{stats.total}</strong>
+          </div>
+          <div className="stat-card">
+            <span>In Stock</span>
+            <strong>{stats.inStock}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Out of Stock</span>
+            <strong>{stats.outOfStock}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Inventory Value</span>
+            <strong>Rs {stats.totalValue.toFixed(2)}</strong>
+          </div>
+        </div>
+      </section>
 
-          <input
-            name="description"
-            placeholder="Description"
-            value={formData.description}
-            onChange={handleChange}
-          />
-
-          <input
-            type="number"
-            step="0.01"
-            name="price"
-            placeholder="Price"
-            value={formData.price}
-            onChange={handleChange}
-            required
-          />
-
-          <input
-            type="number"
-            name="stock_quantity"
-            placeholder="Stock Quantity"
-            value={formData.stock_quantity}
-            onChange={handleChange}
-            required
-          />
-
-          <input
-            name="category"
-            placeholder="Category"
-            value={formData.category}
-            onChange={handleChange}
-            required
-          />
-
-          <label className="checkbox">
+      <main className="shell products-layout">
+        <section className="panel form-panel">
+          <h2>Add New Product</h2>
+          <form className="product-form" onSubmit={handleSubmit}>
             <input
-              type="checkbox"
-              name="is_available"
-              checked={formData.is_available}
+              name="name"
+              placeholder="Product Name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+            <input
+              name="category"
+              placeholder="Category"
+              value={formData.category}
+              onChange={handleChange}
+              required
+            />
+            <input
+              name="description"
+              placeholder="Description"
+              value={formData.description}
               onChange={handleChange}
             />
-            Available
-          </label>
+            <input
+              type="number"
+              step="0.01"
+              name="price"
+              placeholder="Price"
+              value={formData.price}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="number"
+              name="stock_quantity"
+              placeholder="Stock Quantity"
+              value={formData.stock_quantity}
+              onChange={handleChange}
+              required
+            />
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                name="is_available"
+                checked={formData.is_available}
+                onChange={handleChange}
+              />
+              Available
+            </label>
+            <button type="submit">Create Product</button>
+          </form>
+          {submitStatus && <p className="success">{submitStatus}</p>}
+        </section>
 
-          <button type="submit">Add Product</button>
-        </form>
-
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <div className="products-grid">
-            {products.map((product) => (
-              <div key={product.id} className="product-card">
-                <div className="product-media">
-                  <img
-                    className="product-image"
-                    src={getProductImage(product)}
-                    alt={product.name}
-                    loading="lazy"
-                  />
-                  <span
-                    className={
-                      "badge " + (product.is_available ? "available" : "unavailable")
-                    }
-                  >
-                    {product.is_available ? "In Stock" : "Out of Stock"}
-                  </span>
-                </div>
-                <div className="product-body">
-                  <h3>{product.name}</h3>
-                  <p className="muted">{product.category}</p>
-                  <p className="description">{product.description}</p>
-                  <p className="price">₹ {product.price}</p>
-                  <p className="muted small">Stock: {product.stock_quantity}</p>
-                </div>
-              </div>
-            ))}
+        <section className="panel list-panel">
+          <div className="list-head">
+            <h2>Current Products</h2>
+            <input
+              className="search-input"
+              placeholder="Search products..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        )}
 
-        {error && <p className="error">{error}</p>}
-      </div>
-    </>
+          {loading ? (
+            <p className="status">Loading products...</p>
+          ) : filteredProducts.length === 0 ? (
+            <p className="status">No products found.</p>
+          ) : (
+            <div className="products-grid">
+              {filteredProducts.map((product) => (
+                <article key={product.id} className="product-card">
+                  <div className="product-media">
+                    <img
+                      className="product-image"
+                      src={getProductImage(product)}
+                      alt={product.name}
+                      loading="lazy"
+                    />
+                    <span
+                      className={
+                        "badge " + (product.is_available ? "available" : "unavailable")
+                      }
+                    >
+                      {product.is_available ? "In Stock" : "Out of Stock"}
+                    </span>
+                  </div>
+                  <div className="product-body">
+                    <h3>{product.name}</h3>
+                    <p className="muted">{product.category}</p>
+                    <p className="description">{product.description}</p>
+                    <p className="price">Rs {product.price}</p>
+                    <p className="muted small">Stock: {product.stock_quantity}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+
+      {error && <p className="error shell">{error}</p>}
+    </div>
   );
 }
 

@@ -1,13 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getProducts } from "../services/productservice";
-import "./Products.css";
 import "./Shop.css";
 
+const ADMIN_SESSION_KEY = "milkman_admin_logged_in";
+
 function Shop() {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cart, setCart] = useState([]);
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("featured");
+
+  const isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === "true";
 
   const getProductImage = (p) => {
     const key = (p.category || p.name || "").toLowerCase();
@@ -26,20 +35,53 @@ function Shop() {
     return "https://images.unsplash.com/photo-1525253086316-d0c936c814f8?q=80&w=1200&auto=format&fit=crop";
   };
 
-  const fetchProducts = async () => {
-    try {
-      const response = await getProducts();
-      setProducts(response.data);
-    } catch (e) {
-      setError("Failed to load products");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await getProducts();
+        setProducts(response.data);
+      } catch (e) {
+        setError("Failed to load products");
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchProducts();
   }, []);
+
+  const categories = useMemo(() => {
+    const values = Array.from(
+      new Set(products.map((p) => (p.category || "Others").trim()))
+    ).filter(Boolean);
+    return ["All", ...values];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    let list = [...products];
+
+    if (activeCategory !== "All") {
+      list = list.filter((p) => (p.category || "Others") === activeCategory);
+    }
+
+    if (search.trim()) {
+      const keyword = search.toLowerCase();
+      list = list.filter((p) =>
+        `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(keyword)
+      );
+    }
+
+    if (sortBy === "priceAsc") {
+      list.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (sortBy === "priceDesc") {
+      list.sort((a, b) => Number(b.price) - Number(a.price));
+    } else if (sortBy === "nameAsc") {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      list.sort((a, b) => Number(b.is_available) - Number(a.is_available));
+    }
+
+    return list;
+  }, [products, activeCategory, search, sortBy]);
 
   const addToCart = (product) => {
     setCart((prev) => {
@@ -66,69 +108,141 @@ function Shop() {
 
   const totals = useMemo(() => {
     const subtotal = cart.reduce((sum, i) => sum + Number(i.price) * i.qty, 0);
-    return { subtotal, items: cart.reduce((s, i) => s + i.qty, 0) };
+    const delivery = subtotal > 0 ? 20 : 0;
+    return {
+      subtotal,
+      delivery,
+      total: subtotal + delivery,
+      items: cart.reduce((s, i) => s + i.qty, 0),
+    };
   }, [cart]);
 
+  const availableCount = products.filter((item) => item.is_available).length;
+
   return (
-    <>
-      <header className="hero-products">
-        <div className="hero-content">
-          <h1>Shop Fresh Dairy</h1>
-          <p>Select products and add them to your cart.</p>
+    <div className="shop-page">
+      <header className="shop-topbar">
+        <div className="shell topbar-inner">
+          <button className="brand" onClick={() => navigate("/")}>
+            Milkman
+          </button>
+          <div className="topbar-actions">
+            <button className="link-btn" onClick={() => navigate("/")}>
+              Home
+            </button>
+            {isAdmin && (
+              <button className="link-btn" onClick={() => navigate("/products")}>
+                Products
+              </button>
+            )}
+            <button className="cart-pill">Cart {totals.items}</button>
+          </div>
         </div>
       </header>
 
-      <div className="shop-container">
-        <div className="shop-grid">
-          {loading ? (
-            <p>Loading...</p>
-          ) : error ? (
-            <p className="error">{error}</p>
-          ) : (
-            products.map((product) => (
-              <div key={product.id} className="product-card">
-                <div className="product-media">
-                  <img
-                    className="product-image"
-                    src={getProductImage(product)}
-                    alt={product.name}
-                    loading="lazy"
-                  />
-                  <span
-                    className={
-                      "badge " + (product.is_available ? "available" : "unavailable")
-                    }
-                  >
-                    {product.is_available ? "In Stock" : "Out of Stock"}
-                  </span>
-                </div>
-                <div className="product-body">
-                  <h3>{product.name}</h3>
-                  <p className="muted">{product.category}</p>
-                  <p className="description">{product.description}</p>
-                  <div className="card-bottom">
-                    <span className="price">₹ {product.price}</span>
-                    <button
-                      disabled={!product.is_available}
-                      className="btn-add"
-                      onClick={() => addToCart(product)}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+      <section className="shop-hero">
+        <div className="shell hero-inner">
+          <div>
+            <p className="kicker">Daily essentials storefront</p>
+            <h1>Fresh dairy products, delivered fast</h1>
+            <p className="hero-sub">
+              Real-time availability, clear pricing, and a smooth cart experience.
+            </p>
+            <div className="trust-row">
+              <span>{products.length} total products</span>
+              <span>{availableCount} in stock</span>
+              <span>Delivery in 30 mins</span>
+            </div>
+          </div>
         </div>
+      </section>
+
+      <main className="shell shop-layout">
+        <section className="catalog">
+          <div className="controls">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search milk, cheese, curd..."
+              className="search"
+            />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="sort"
+            >
+              <option value="featured">Featured</option>
+              <option value="nameAsc">Name A-Z</option>
+              <option value="priceAsc">Price Low-High</option>
+              <option value="priceDesc">Price High-Low</option>
+            </select>
+          </div>
+
+          <div className="chip-row">
+            {categories.map((category) => (
+              <button
+                key={category}
+                className={category === activeCategory ? "chip active" : "chip"}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <p className="shop-status">Loading products...</p>
+          ) : error ? (
+            <p className="shop-status error">{error}</p>
+          ) : filteredProducts.length === 0 ? (
+            <p className="shop-status">No products match your filters.</p>
+          ) : (
+            <div className="shop-grid">
+              {filteredProducts.map((product) => (
+                <article key={product.id} className="product-card">
+                  <div className="product-media">
+                    <img
+                      className="product-image"
+                      src={getProductImage(product)}
+                      alt={product.name}
+                      loading="lazy"
+                    />
+                    <span
+                      className={
+                        product.is_available ? "badge available" : "badge unavailable"
+                      }
+                    >
+                      {product.is_available ? "In Stock" : "Out of Stock"}
+                    </span>
+                  </div>
+                  <div className="product-body">
+                    <p className="category">{product.category || "Others"}</p>
+                    <h3>{product.name}</h3>
+                    <p className="description">{product.description}</p>
+                    <div className="card-bottom">
+                      <span className="price">Rs {product.price}</span>
+                      <button
+                        disabled={!product.is_available}
+                        className="btn-add"
+                        onClick={() => addToCart(product)}
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
         <aside className="cart">
           <div className="cart-header">
-            <h2>Cart</h2>
+            <h2>Your Cart</h2>
             <span className="cart-count">{totals.items}</span>
           </div>
           {cart.length === 0 ? (
-            <p className="muted">Your cart is empty</p>
+            <p className="empty-note">Your cart is empty</p>
           ) : (
             <>
               <ul className="cart-list">
@@ -136,14 +250,14 @@ function Shop() {
                   <li key={item.id} className="cart-item">
                     <div className="cart-info">
                       <strong>{item.name}</strong>
-                      <span className="muted small">₹ {item.price}</span>
+                      <span>Rs {item.price}</span>
                     </div>
                     <div className="cart-actions">
                       <button onClick={() => decrement(item.id)}>-</button>
                       <span className="qty">{item.qty}</span>
                       <button onClick={() => increment(item.id)}>+</button>
                       <button className="remove" onClick={() => removeItem(item.id)}>
-                        ×
+                        x
                       </button>
                     </div>
                   </li>
@@ -152,17 +266,26 @@ function Shop() {
               <div className="cart-footer">
                 <div className="totals">
                   <span>Subtotal</span>
-                  <strong>₹ {totals.subtotal.toFixed(2)}</strong>
+                  <strong>Rs {totals.subtotal.toFixed(2)}</strong>
+                </div>
+                <div className="totals">
+                  <span>Delivery</span>
+                  <strong>Rs {totals.delivery.toFixed(2)}</strong>
+                </div>
+                <div className="totals grand">
+                  <span>Total</span>
+                  <strong>Rs {totals.total.toFixed(2)}</strong>
                 </div>
                 <button className="btn-clear" onClick={clearCart}>
                   Clear Cart
                 </button>
+                <button className="btn-checkout">Proceed to Checkout</button>
               </div>
             </>
           )}
         </aside>
-      </div>
-    </>
+      </main>
+    </div>
   );
 }
 

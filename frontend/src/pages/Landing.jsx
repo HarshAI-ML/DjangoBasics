@@ -2,11 +2,15 @@ import "./Landing.css";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
+const ADMIN_SESSION_KEY = "milkman_admin_logged_in";
+
 function Landing() {
   const navigate = useNavigate();
 
   const [showModal, setShowModal] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return localStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  });
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
@@ -19,6 +23,7 @@ function Landing() {
       credentials.password === "password"
     ) {
       setIsAdmin(true);
+      localStorage.setItem(ADMIN_SESSION_KEY, "true");
       setShowModal(false);
       setError("");
     } else {
@@ -26,19 +31,50 @@ function Landing() {
     }
   };
 
+  const handleExplorePlans = () => {
+    document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleLogout = () => {
+    setIsAdmin(false);
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    setShowModal(false);
+    setError("");
+    setCredentials({ email: "", password: "" });
+  };
+
   return (
     <div className="landing">
+      <header className="topbar">
+        <div className="container">
+          <div className="topbar-inner">
+            <h2 className="logo">Milkman</h2>
+            {isAdmin ? (
+              <button className="admin-btn" onClick={handleLogout}>
+                Admin Logout
+              </button>
+            ) : (
+              <button className="admin-btn" onClick={() => setShowModal(true)}>
+                Admin Login
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
       <nav className="navbar">
         <div className="container">
           <div className="navbar-inner">
-            <h2 className="logo">Milkman 🥛</h2>
             <div className="nav-buttons">
+              <button className="nav-btn" onClick={() => navigate("/shop")}>
+                Shop
+              </button>
+              <button className="nav-btn" onClick={handleExplorePlans}>
+                Plans
+              </button>
               {isAdmin && (
                 <>
-                  <button
-                    className="nav-btn"
-                    onClick={() => navigate("/staff")}
-                  >
+                  <button className="nav-btn" onClick={() => navigate("/staff")}>
                     Staff
                   </button>
                   <button
@@ -49,18 +85,6 @@ function Landing() {
                   </button>
                 </>
               )}
-              <button
-                className="nav-btn"
-                onClick={() => navigate("/shop")}
-              >
-                Shop
-              </button>
-              <button
-                className="nav-btn primary"
-                onClick={() => setShowModal(true)}
-              >
-                Admin
-              </button>
             </div>
           </div>
         </div>
@@ -70,17 +94,29 @@ function Landing() {
         <div className="container">
           <div className="hero-inner">
             <div className="hero-text">
+              <p className="eyebrow">Fresh dairy, every morning</p>
               <h1>Fresh Milk Delivered to Your Doorstep</h1>
               <p>
                 Subscribe daily and get farm-fresh milk every morning. Pure.
                 Hygienic. Reliable.
               </p>
-              <button className="cta-btn">Subscribe Now</button>
+              <div className="hero-actions">
+                <button className="cta-btn" onClick={() => navigate("/shop")}>
+                  Subscribe Now
+                </button>
+                <button className="ghost-btn" onClick={handleExplorePlans}>
+                  View Plans
+                </button>
+              </div>
+              <div className="hero-stats">
+                <span>1200+ homes served</span>
+                <span>4.9/5 customer rating</span>
+              </div>
             </div>
             <div className="hero-img">
               <img
                 src="https://raghuvanshagro.com/products/cow-buffalo-milk.jpg"
-                alt="Buffalo"
+                alt="Fresh milk"
               />
             </div>
           </div>
@@ -107,23 +143,23 @@ function Landing() {
         </div>
       </section>
 
-      <section className="pricing">
+      <section className="pricing" id="plans">
         <div className="container">
           <h2>Flexible Plans</h2>
           <div className="pricing-cards">
             <div className="price-card">
               <h3>Starter</h3>
-              <p className="price">₹199/mo</p>
+              <p className="price">Rs 199/mo</p>
               <p>500ml daily</p>
             </div>
             <div className="price-card highlight">
               <h3>Standard</h3>
-              <p className="price">₹349/mo</p>
+              <p className="price">Rs 349/mo</p>
               <p>1L daily</p>
             </div>
             <div className="price-card">
               <h3>Family</h3>
-              <p className="price">₹599/mo</p>
+              <p className="price">Rs 599/mo</p>
               <p>2L daily</p>
             </div>
           </div>
@@ -132,7 +168,7 @@ function Landing() {
 
       <footer className="footer">
         <div className="container">
-          <p>© 2026 Milkman. All rights reserved.</p>
+          <p>Copyright 2026 Milkman. All rights reserved.</p>
         </div>
       </footer>
 
@@ -169,10 +205,7 @@ function Landing() {
 
             <div className="modal-buttons">
               <button onClick={handleLogin}>Login</button>
-              <button
-                className="cancel-btn"
-                onClick={() => setShowModal(false)}
-              >
+              <button className="cancel-btn" onClick={() => setShowModal(false)}>
                 Cancel
               </button>
             </div>
