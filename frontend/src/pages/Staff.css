@@ -1,0 +1,111 @@
+* {
+  box-sizing: border-box;
+}
+.staff-hero {
+  width: 100%;
+  background: linear-gradient(180deg, rgba(44,62,80,0.85), rgba(44,62,80,0.6)), url("https://images.unsplash.com/photo-1496302662116-25d09bfebb10?q=80&w=1600&auto=format&fit=crop") center/cover no-repeat;
+  color: #fff;
+  padding: 64px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.staff-hero-content {
+  max-width: 900px;
+  text-align: center;
+}
+.staff-hero-content h1 {
+  font-size: 42px;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+.staff-hero-content p {
+  margin: 0;
+  opacity: 0.95;
+}
+.staff-container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+  font-family: Arial, sans-serif;
+  display: grid;
+  gap: 24px;
+}
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  padding: 20px;
+}
+.section-title {
+  font-size: 24px;
+  color: #2c3e50;
+  margin: 0 0 16px;
+}
+.table-wrapper {
+  overflow-x: auto;
+}
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+.staff-table th,
+.staff-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef2f4;
+  font-size: 14px;
+}
+.staff-table thead th {
+  background: #f8fafc;
+  color: #2c3e50;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.staff-table tbody tr:nth-child(odd) {
+  background: #fcfdfe;
+}
+.staff-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.staff-form input {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+.staff-form input:focus {
+  outline: none;
+  border-color: #2c3e50;
+  box-shadow: 0 0 0 2px rgba(44,62,80,0.1);
+}
+.btn-primary {
+  grid-column: 1 / -1;
+  padding: 12px;
+  background: #2c3e50;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+.btn-primary:hover {
+  background: #1a252f;
+  transform: translateY(-2px);
+}
+@media (max-width: 768px) {
+  .staff-form {
+    grid-template-columns: 1fr;
+  }
+  .staff-hero-content h1 {
+    font-size: 34px;
+  }
+}
