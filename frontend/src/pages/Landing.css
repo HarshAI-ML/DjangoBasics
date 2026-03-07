@@ -305,6 +305,10 @@ body {
   background: #1f7a48;
 }
 
+.plan-btn.delete {
+  background: #c91f37;
+}
+
 .plan-note {
   margin-top: 16px;
   text-align: center;
@@ -314,6 +318,36 @@ body {
 .plan-note.success {
   color: #166534;
   font-weight: 600;
+}
+
+.plan-admin-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.plan-admin-form h3 {
+  margin: 0;
+}
+
+.plan-admin-form input {
+  border: 1px solid #ccd7ec;
+  border-radius: 8px;
+  padding: 9px 10px;
+}
+
+.plan-admin-form button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #1f4fb2;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .footer {

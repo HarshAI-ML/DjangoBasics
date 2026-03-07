@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { getRole, getUsername, isAdmin, logout } from "../utils/auth";
 import {
-  AVAILABLE_PLANS,
+  addPlan,
+  deletePlan,
+  getAvailablePlans,
   getCustomerSubscription,
   subscribeCustomerToPlan,
 } from "../utils/subscription";
@@ -15,7 +17,9 @@ function Landing() {
   const [subscription, setSubscription] = useState(() =>
     getCustomerSubscription(getUsername())
   );
+  const [plans, setPlans] = useState(() => getAvailablePlans());
   const [message, setMessage] = useState("");
+  const [planForm, setPlanForm] = useState({ name: "", monthlyPrice: "", quantity: "" });
 
   const adminMode = isAdmin();
   const isCustomer = role === "customer";
@@ -44,6 +48,24 @@ function Landing() {
     setMessage(`You are now subscribed to ${updated.name} plan.`);
   };
 
+  const handleAddPlan = (e) => {
+    e.preventDefault();
+    const created = addPlan(planForm);
+    if (!created) return;
+    setPlans(getAvailablePlans());
+    setPlanForm({ name: "", monthlyPrice: "", quantity: "" });
+    setMessage(`Plan "${created.name}" added.`);
+  };
+
+  const handleDeletePlan = (planId) => {
+    deletePlan(planId);
+    setPlans(getAvailablePlans());
+    if (subscription?.id === planId) {
+      setSubscription(null);
+    }
+    setMessage("Plan deleted.");
+  };
+
   return (
     <div className="landing">
       <header className="topbar">
@@ -67,9 +89,11 @@ function Landing() {
         <div className="container">
           <div className="navbar-inner">
             <div className="nav-buttons">
-              <button className="nav-btn" onClick={() => navigate("/shop")}>
-                Shop
-              </button>
+              {!adminMode && (
+                <button className="nav-btn" onClick={() => navigate("/shop")}>
+                  Shop
+                </button>
+              )}
               <button className="nav-btn" onClick={handleExplorePlans}>
                 Plans
               </button>
@@ -89,6 +113,12 @@ function Landing() {
                   >
                     Products
                   </button>
+                  <button
+                    className="nav-btn"
+                    onClick={() => navigate("/customers")}
+                  >
+                    Customers
+                  </button>
                 </>
               )}
             </div>
@@ -107,9 +137,11 @@ function Landing() {
                 Hygienic. Reliable.
               </p>
               <div className="hero-actions">
-                <button className="cta-btn" onClick={() => navigate("/shop")}>
-                  Subscribe Now
-                </button>
+                {!adminMode && (
+                  <button className="cta-btn" onClick={() => navigate("/shop")}>
+                    Subscribe Now
+                  </button>
+                )}
                 <button className="ghost-btn" onClick={handleExplorePlans}>
                   View Plans
                 </button>
@@ -153,7 +185,7 @@ function Landing() {
         <div className="container">
           <h2>Flexible Plans</h2>
           <div className="pricing-cards">
-            {AVAILABLE_PLANS.map((plan) => {
+            {plans.map((plan) => {
               const isCurrentPlan = subscription?.id === plan.id;
               return (
                 <div
@@ -163,20 +195,60 @@ function Landing() {
                   <h3>{plan.name}</h3>
                   <p className="price">Rs {plan.monthlyPrice}/mo</p>
                   <p>{plan.quantity}</p>
-                  <button
-                    className={isCurrentPlan ? "plan-btn current" : "plan-btn"}
-                    onClick={() => handleSubscribe(plan.id)}
-                  >
-                    {isCurrentPlan ? "Current Plan" : "Subscribe"}
-                  </button>
+                  {isCustomer && (
+                    <button
+                      className={isCurrentPlan ? "plan-btn current" : "plan-btn"}
+                      onClick={() => handleSubscribe(plan.id)}
+                    >
+                      {isCurrentPlan ? "Current Plan" : "Subscribe"}
+                    </button>
+                  )}
+                  {adminMode && (
+                    <button
+                      className="plan-btn delete"
+                      onClick={() => handleDeletePlan(plan.id)}
+                    >
+                      Delete Plan
+                    </button>
+                  )}
                 </div>
               );
             })}
           </div>
-          {!isCustomer && (
+          {!isCustomer && !adminMode && (
             <p className="plan-note">Login as customer to subscribe to a plan.</p>
           )}
+          {adminMode && (
+            <form className="plan-admin-form" onSubmit={handleAddPlan}>
+              <h3>Add Plan</h3>
+              <input
+                type="text"
+                placeholder="Plan Name"
+                value={planForm.name}
+                onChange={(e) => setPlanForm((prev) => ({ ...prev, name: e.target.value }))}
+                required
+              />
+              <input
+                type="number"
+                placeholder="Monthly Price"
+                value={planForm.monthlyPrice}
+                onChange={(e) =>
+                  setPlanForm((prev) => ({ ...prev, monthlyPrice: e.target.value }))
+                }
+                required
+              />
+              <input
+                type="text"
+                placeholder="Quantity (e.g. 1L daily)"
+                value={planForm.quantity}
+                onChange={(e) => setPlanForm((prev) => ({ ...prev, quantity: e.target.value }))}
+                required
+              />
+              <button type="submit">Add Plan</button>
+            </form>
+          )}
           {isCustomer && message && <p className="plan-note success">{message}</p>}
+          {adminMode && message && <p className="plan-note success">{message}</p>}
         </div>
       </section>
 

@@ -7,6 +7,8 @@ function Signup() {
   const navigate = useNavigate();
   const [username, setUserName] = useState("");
   const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +27,7 @@ function Signup() {
       return;
     }
 
-    const result = registerCustomer({ username, email, password });
+    const result = registerCustomer({ username, email, address, mobile, password });
     if (!result.ok) {
       setError(result.error || "Signup failed");
       return;
@@ -56,6 +58,20 @@ function Signup() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            required
+          />
+          <input
+            type="tel"
+            placeholder="Mobile Number"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
             required
           />
           <input

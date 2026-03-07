@@ -8,6 +8,7 @@ import Signup from "../pages/Signup";
 import Checkout from "../pages/Checkout";
 import OrderSummary from "../pages/OrderSummary";
 import CustomerAccount from "../pages/CustomerAccount";
+import Customers from "../pages/Customers";
 import { getRole, isAuthenticated, isAdmin } from "../utils/auth";
 
 function AdminRoute({ children }) {
@@ -88,6 +89,14 @@ function AppRoutes() {
           element={
             <AdminRoute>
               <Products />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <AdminRoute>
+              <Customers />
             </AdminRoute>
           }
         />

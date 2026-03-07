@@ -15,6 +15,13 @@ export const authKeys = {
   REGISTERED_USERS_KEY,
 };
 
+export const DEFAULT_CUSTOMER = {
+  username: "customer",
+  email: CUSTOMER_EMAIL,
+  address: "Not provided",
+  mobile: "Not provided",
+};
+
 const getRegisteredUsers = () => {
   const raw = localStorage.getItem(REGISTERED_USERS_KEY);
   if (!raw) return [];
@@ -88,10 +95,12 @@ export const authenticateUser = (email, password) => {
   return { ok: false, role: null, username: null };
 };
 
-export const registerCustomer = ({ username, email, password }) => {
+export const registerCustomer = ({ username, email, password, address, mobile }) => {
   const safeUsername = (username || "").trim();
   const safeEmail = (email || "").trim().toLowerCase();
   const safePassword = (password || "").trim();
+  const safeAddress = (address || "").trim();
+  const safeMobile = (mobile || "").trim();
   const users = getRegisteredUsers();
 
   const isReservedEmail = safeEmail === ADMIN_EMAIL || safeEmail === CUSTOMER_EMAIL;
@@ -103,7 +112,19 @@ export const registerCustomer = ({ username, email, password }) => {
     username: safeUsername,
     email: safeEmail,
     password: safePassword,
+    address: safeAddress || "Not provided",
+    mobile: safeMobile || "Not provided",
   });
   saveRegisteredUsers(users);
   return { ok: true };
+};
+
+export const getAllCustomers = () => {
+  const registered = getRegisteredUsers().map((item) => ({
+    username: item.username,
+    email: item.email,
+    address: item.address || "Not provided",
+    mobile: item.mobile || "Not provided",
+  }));
+  return [DEFAULT_CUSTOMER, ...registered];
 };
