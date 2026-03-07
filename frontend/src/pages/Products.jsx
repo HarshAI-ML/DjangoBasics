@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProducts, createProduct } from "../services/productservice";
 import "./Products.css";
@@ -14,12 +14,17 @@ function Products() {
     stock_quantity: "",
     category: "",
     is_available: true,
+    image: null,
   });
+  const formRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitStatus, setSubmitStatus] = useState("");
 
   const getProductImage = (p) => {
+    if (p.image) {
+      return p.image;
+    }
     const key = (p.category || p.name || "").toLowerCase();
     if (key.includes("milk")) {
       return "https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=1200&auto=format&fit=crop";
@@ -53,10 +58,15 @@ function Products() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked, files } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "file"
+          ? files?.[0] ?? null
+          : value,
     }));
   };
 
@@ -64,8 +74,19 @@ function Products() {
     e.preventDefault();
     setSubmitStatus("");
 
+    const payload = new FormData();
+    payload.append("name", formData.name);
+    payload.append("category", formData.category);
+    payload.append("description", formData.description);
+    payload.append("price", formData.price);
+    payload.append("stock_quantity", formData.stock_quantity);
+    payload.append("is_available", formData.is_available);
+    if (formData.image) {
+      payload.append("image", formData.image);
+    }
+
     try {
-      await createProduct(formData);
+      await createProduct(payload);
       await fetchProducts();
       setFormData({
         name: "",
@@ -74,7 +95,10 @@ function Products() {
         stock_quantity: "",
         category: "",
         is_available: true,
+        image: null,
       });
+      formRef.current?.reset();
+      setError("");
       setSubmitStatus("Product created successfully.");
     } catch (err) {
       setError("Failed to create product");
@@ -146,7 +170,7 @@ function Products() {
       <main className="shell products-layout">
         <section className="panel form-panel">
           <h2>Add New Product</h2>
-          <form className="product-form" onSubmit={handleSubmit}>
+          <form ref={formRef} className="product-form" onSubmit={handleSubmit}>
             <input
               name="name"
               placeholder="Product Name"
@@ -165,6 +189,14 @@ function Products() {
               name="description"
               placeholder="Description"
               value={formData.description}
+              onChange={handleChange}
+            />
+            <label htmlFor="product-image">Image to show (optional)</label>
+            <input
+              id="product-image"
+              type="file"
+              name="image"
+              accept="image/*"
               onChange={handleChange}
             />
             <input

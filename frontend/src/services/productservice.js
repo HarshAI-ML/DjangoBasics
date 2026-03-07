@@ -9,5 +9,6 @@ export const getProducts = async () => {
 
 // CREATE product
 export const createProduct = async (data) => {
-  return await axios.post(API_URL, data);
+  const config = data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : {};
+  return await axios.post(API_URL, data, config);
 };

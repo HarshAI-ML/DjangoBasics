@@ -1,0 +1,104 @@
+.account-page {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background: #f5f8ff;
+}
+
+.account-wrap {
+  width: min(980px, 100%);
+  margin: 0 auto;
+}
+
+.account-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.account-sub {
+  color: #5b6886;
+}
+
+.account-back {
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  background: #dfe8ff;
+  cursor: pointer;
+}
+
+.account-tabs {
+  display: flex;
+  gap: 0.7rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.account-tabs button {
+  border: 1px solid #ccd8f4;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+
+.account-tabs button.active {
+  background: #2f6de1;
+  color: #fff;
+  border-color: #2f6de1;
+}
+
+.account-card {
+  background: #fff;
+  border: 1px solid #dbe4f8;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.account-grid p {
+  margin: 0;
+  border: 1px solid #e6ecfb;
+  border-radius: 10px;
+  padding: 0.6rem;
+}
+
+.account-grid span {
+  display: block;
+  color: #607095;
+  font-size: 0.85rem;
+}
+
+.order-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.order-list li {
+  border: 1px solid #e6ecfb;
+  border-radius: 10px;
+  padding: 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.order-list span {
+  display: block;
+  color: #607095;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .account-grid {
+    grid-template-columns: 1fr;
+  }
+}

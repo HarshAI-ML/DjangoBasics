@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProducts } from "../services/productservice";
+import { isAdmin } from "../utils/auth";
 import "./Shop.css";
-
-const ADMIN_SESSION_KEY = "milkman_admin_logged_in";
 
 function Shop() {
   const navigate = useNavigate();
@@ -16,9 +15,12 @@ function Shop() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("featured");
 
-  const isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const adminMode = isAdmin();
 
   const getProductImage = (p) => {
+    if (p.image) {
+      return p.image;
+    }
     const key = (p.category || p.name || "").toLowerCase();
     if (key.includes("milk")) {
       return "https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=1200&auto=format&fit=crop";
@@ -105,6 +107,10 @@ function Shop() {
     );
   const removeItem = (id) => setCart((prev) => prev.filter((i) => i.id !== id));
   const clearCart = () => setCart([]);
+  const proceedToCheckout = () => {
+    if (!cart.length) return;
+    navigate("/checkout", { state: { cart } });
+  };
 
   const totals = useMemo(() => {
     const subtotal = cart.reduce((sum, i) => sum + Number(i.price) * i.qty, 0);
@@ -130,7 +136,7 @@ function Shop() {
             <button className="link-btn" onClick={() => navigate("/")}>
               Home
             </button>
-            {isAdmin && (
+            {adminMode && (
               <button className="link-btn" onClick={() => navigate("/products")}>
                 Products
               </button>
@@ -279,7 +285,9 @@ function Shop() {
                 <button className="btn-clear" onClick={clearCart}>
                   Clear Cart
                 </button>
-                <button className="btn-checkout">Proceed to Checkout</button>
+                <button className="btn-checkout" onClick={proceedToCheckout}>
+                  Proceed to Checkout
+                </button>
               </div>
             </>
           )}

@@ -290,6 +290,32 @@ body {
   border: 2px solid var(--brand);
 }
 
+.plan-btn {
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #1f4fb2;
+  color: #fff;
+}
+
+.plan-btn.current {
+  background: #1f7a48;
+}
+
+.plan-note {
+  margin-top: 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.plan-note.success {
+  color: #166534;
+  font-weight: 600;
+}
+
 .footer {
   margin-top: 50px;
   background: #1a2842;
@@ -385,4 +411,5 @@ body {
   .pricing-cards {
     grid-template-columns: 1fr;
   }
+
 }

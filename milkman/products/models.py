@@ -10,6 +10,7 @@ class Product(models.Model):
     stock_quantity = models.PositiveIntegerField()
     category = models.CharField(max_length=100)
     is_available = models.BooleanField(default=True)
+    image = models.FileField(upload_to="product_images/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

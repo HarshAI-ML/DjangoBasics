@@ -1,46 +1,47 @@
 import "./Landing.css";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-
-const ADMIN_SESSION_KEY = "milkman_admin_logged_in";
+import { getRole, getUsername, isAdmin, logout } from "../utils/auth";
+import {
+  AVAILABLE_PLANS,
+  getCustomerSubscription,
+  subscribeCustomerToPlan,
+} from "../utils/subscription";
 
 function Landing() {
   const navigate = useNavigate();
+  const [role, setRole] = useState(() => getRole());
+  const [username] = useState(() => getUsername());
+  const [subscription, setSubscription] = useState(() =>
+    getCustomerSubscription(getUsername())
+  );
+  const [message, setMessage] = useState("");
 
-  const [showModal, setShowModal] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(() => {
-    return localStorage.getItem(ADMIN_SESSION_KEY) === "true";
-  });
-  const [credentials, setCredentials] = useState({
-    email: "",
-    password: "",
-  });
-  const [error, setError] = useState("");
-
-  const handleLogin = () => {
-    if (
-      credentials.email === "harshshinde@gmail.com" &&
-      credentials.password === "password"
-    ) {
-      setIsAdmin(true);
-      localStorage.setItem(ADMIN_SESSION_KEY, "true");
-      setShowModal(false);
-      setError("");
-    } else {
-      setError("Invalid email or password");
-    }
-  };
+  const adminMode = isAdmin();
+  const isCustomer = role === "customer";
 
   const handleExplorePlans = () => {
     document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });
   };
+  const handleMyPlan = () => navigate("/account");
 
   const handleLogout = () => {
-    setIsAdmin(false);
-    localStorage.removeItem(ADMIN_SESSION_KEY);
-    setShowModal(false);
-    setError("");
-    setCredentials({ email: "", password: "" });
+    logout();
+    setRole(null);
+    setSubscription(null);
+    setMessage("");
+  };
+
+  const handleSubscribe = (planId) => {
+    if (!isCustomer) {
+      navigate("/login");
+      return;
+    }
+
+    const updated = subscribeCustomerToPlan(username, planId);
+    if (!updated) return;
+    setSubscription(updated);
+    setMessage(`You are now subscribed to ${updated.name} plan.`);
   };
 
   return (
@@ -49,13 +50,13 @@ function Landing() {
         <div className="container">
           <div className="topbar-inner">
             <h2 className="logo">Milkman</h2>
-            {isAdmin ? (
+            {role ? (
               <button className="admin-btn" onClick={handleLogout}>
-                Admin Logout
+                Logout
               </button>
             ) : (
-              <button className="admin-btn" onClick={() => setShowModal(true)}>
-                Admin Login
+              <button className="admin-btn" onClick={() => navigate("/login")}>
+                Login
               </button>
             )}
           </div>
@@ -72,7 +73,12 @@ function Landing() {
               <button className="nav-btn" onClick={handleExplorePlans}>
                 Plans
               </button>
-              {isAdmin && (
+              {isCustomer && (
+                <button className="nav-btn" onClick={handleMyPlan}>
+                  My Account
+                </button>
+              )}
+              {adminMode && (
                 <>
                   <button className="nav-btn" onClick={() => navigate("/staff")}>
                     Staff
@@ -147,22 +153,30 @@ function Landing() {
         <div className="container">
           <h2>Flexible Plans</h2>
           <div className="pricing-cards">
-            <div className="price-card">
-              <h3>Starter</h3>
-              <p className="price">Rs 199/mo</p>
-              <p>500ml daily</p>
-            </div>
-            <div className="price-card highlight">
-              <h3>Standard</h3>
-              <p className="price">Rs 349/mo</p>
-              <p>1L daily</p>
-            </div>
-            <div className="price-card">
-              <h3>Family</h3>
-              <p className="price">Rs 599/mo</p>
-              <p>2L daily</p>
-            </div>
+            {AVAILABLE_PLANS.map((plan) => {
+              const isCurrentPlan = subscription?.id === plan.id;
+              return (
+                <div
+                  key={plan.id}
+                  className={isCurrentPlan ? "price-card highlight" : "price-card"}
+                >
+                  <h3>{plan.name}</h3>
+                  <p className="price">Rs {plan.monthlyPrice}/mo</p>
+                  <p>{plan.quantity}</p>
+                  <button
+                    className={isCurrentPlan ? "plan-btn current" : "plan-btn"}
+                    onClick={() => handleSubscribe(plan.id)}
+                  >
+                    {isCurrentPlan ? "Current Plan" : "Subscribe"}
+                  </button>
+                </div>
+              );
+            })}
           </div>
+          {!isCustomer && (
+            <p className="plan-note">Login as customer to subscribe to a plan.</p>
+          )}
+          {isCustomer && message && <p className="plan-note success">{message}</p>}
         </div>
       </section>
 
@@ -171,47 +185,6 @@ function Landing() {
           <p>Copyright 2026 Milkman. All rights reserved.</p>
         </div>
       </footer>
-
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Admin Login</h3>
-
-            <input
-              type="email"
-              placeholder="Email"
-              value={credentials.email}
-              onChange={(e) =>
-                setCredentials({
-                  ...credentials,
-                  email: e.target.value,
-                })
-              }
-            />
-
-            <input
-              type="password"
-              placeholder="Password"
-              value={credentials.password}
-              onChange={(e) =>
-                setCredentials({
-                  ...credentials,
-                  password: e.target.value,
-                })
-              }
-            />
-
-            {error && <p className="error">{error}</p>}
-
-            <div className="modal-buttons">
-              <button onClick={handleLogin}>Login</button>
-              <button className="cancel-btn" onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
