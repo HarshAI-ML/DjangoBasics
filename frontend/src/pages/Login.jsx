@@ -12,7 +12,7 @@ function Login() {
   useEffect(() => {
     const role = getRole();
     if (!role) return;
-    navigate(role === "admin" ? "/products" : "/shop", { replace: true });
+    navigate(role === "admin" ? "/products" : "/", { replace: true });
   }, [navigate]);
 
   const handleSubmit = (e) => {
@@ -27,7 +27,7 @@ function Login() {
     setRole(result.role);
     setUsername(result.username);
     setError("");
-    navigate(result.role === "admin" ? "/products" : "/shop", { replace: true });
+    navigate(result.role === "admin" ? "/products" : "/", { replace: true });
   };
 
   return (

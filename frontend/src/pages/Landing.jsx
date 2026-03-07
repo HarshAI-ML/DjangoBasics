@@ -137,7 +137,7 @@ function Landing() {
                 Hygienic. Reliable.
               </p>
               <div className="hero-actions">
-                {!adminMode && (
+                {!role && (
                   <button className="cta-btn" onClick={() => navigate("/shop")}>
                     Subscribe Now
                   </button>
