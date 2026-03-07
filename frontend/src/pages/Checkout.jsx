@@ -21,18 +21,20 @@ function Checkout() {
     };
   }, [cart]);
 
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
     if (!cart.length) return;
+    const now = new Date();
     const order = {
       customerUsername: username,
       orderNumber: `ORD-${Date.now()}`,
-      orderDate: new Date().toLocaleString(),
+      orderDate: now.toLocaleString(),
+      rawOrderDate: now.toISOString(),
       totalBill: totals.total,
       items: cart,
     };
-    addCustomerOrder(username, order);
+    const savedOrder = await addCustomerOrder(username, order);
     navigate("/order-summary", {
-      state: { order },
+      state: { order: savedOrder || order },
     });
   };
 

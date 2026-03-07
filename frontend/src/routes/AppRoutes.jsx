@@ -25,15 +25,13 @@ function CustomerRoute({ children }) {
 
 function LoginRoute() {
   const role = getRole();
-  if (role === "admin") return <Navigate to="/products" replace />;
-  if (role === "customer") return <Navigate to="/" replace />;
+  if (role === "admin" || role === "customer") return <Navigate to="/" replace />;
   return <Login />;
 }
 
 function SignupRoute() {
   const role = getRole();
-  if (role === "admin") return <Navigate to="/products" replace />;
-  if (role === "customer") return <Navigate to="/" replace />;
+  if (role === "admin" || role === "customer") return <Navigate to="/" replace />;
   return <Signup />;
 }
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllCustomers } from "../utils/auth";
 import { getAllCustomerSubscriptions } from "../utils/subscription";
@@ -6,23 +6,37 @@ import "./Customers.css";
 
 function Customers() {
   const navigate = useNavigate();
+  const [customers, setCustomers] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [customerData, subData] = await Promise.all([
+          getAllCustomers(),
+          getAllCustomerSubscriptions(),
+        ]);
+        setCustomers(customerData);
+        setSubscriptions(subData);
+      } catch {
+        setCustomers([]);
+        setSubscriptions([]);
+      }
+    };
+    fetchData();
+  }, []);
 
   const rows = useMemo(() => {
-    const customers = getAllCustomers();
-    const subscriptions = getAllCustomerSubscriptions();
-
     return customers.map((customer) => {
-      const sub = subscriptions[customer.username];
+      const sub = subscriptions.find((item) => item.customer_username === customer.username);
       return {
         ...customer,
-        plan: sub?.name || "No Plan",
+        plan: sub?.plan_name || "No Plan",
         status: sub?.status || "-",
-        subscribedOn: sub?.subscribedAt
-          ? new Date(sub.subscribedAt).toLocaleString()
-          : "-",
+        subscribedOn: sub?.subscribed_at ? new Date(sub.subscribed_at).toLocaleString() : "-",
       };
     });
-  }, []);
+  }, [customers, subscriptions]);
 
   return (
     <div className="customers-page">

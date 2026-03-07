@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUsername } from "../utils/auth";
 import { getCustomerOrders } from "../utils/orderHistory";
@@ -9,9 +9,20 @@ function CustomerAccount() {
   const navigate = useNavigate();
   const username = getUsername();
   const [activeTab, setActiveTab] = useState("subscription");
+  const [subscription, setSubscription] = useState(null);
+  const [orders, setOrders] = useState([]);
 
-  const subscription = getCustomerSubscription(username);
-  const orders = getCustomerOrders(username);
+  useEffect(() => {
+    const fetchData = async () => {
+      const [sub, orderData] = await Promise.all([
+        getCustomerSubscription(username),
+        getCustomerOrders(username),
+      ]);
+      setSubscription(sub);
+      setOrders(orderData);
+    };
+    fetchData();
+  }, [username]);
 
   const subscriptionDate = useMemo(() => {
     if (!subscription?.subscribedAt) return "-";

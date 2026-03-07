@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getUsername } from "../utils/auth";
 import { getCustomerOrders } from "../utils/orderHistory";
@@ -8,8 +8,17 @@ function OrderSummary() {
   const navigate = useNavigate();
   const location = useLocation();
   const username = getUsername();
-  const latestOrder = useMemo(() => getCustomerOrders(username)[0] || null, [username]);
-  const order = location.state?.order || latestOrder;
+  const [order, setOrder] = useState(location.state?.order || null);
+
+  useEffect(() => {
+    const fetchLatest = async () => {
+      if (order) return;
+      const orders = await getCustomerOrders(username);
+      setOrder(orders[0] || null);
+    };
+    fetchLatest();
+  }, [order, username]);
+
   const cart = order?.items || [];
   const totalBill = Number(order?.totalBill || 0);
 

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "customers",
     "products",
     "orders",
+    "subscriptions",
     "corsheaders",
     "example",
 ]

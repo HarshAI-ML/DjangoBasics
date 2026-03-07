@@ -60,3 +60,15 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product_name} x {self.quantity}"
+
+
+class CustomerOrder(models.Model):
+    customer_username = models.CharField(max_length=100, db_index=True)
+    order_number = models.CharField(max_length=50, unique=True)
+    total_bill = models.DecimalField(max_digits=10, decimal_places=2)
+    order_date = models.DateTimeField()
+    items = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.order_number} ({self.customer_username})"

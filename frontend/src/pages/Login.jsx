@@ -12,12 +12,12 @@ function Login() {
   useEffect(() => {
     const role = getRole();
     if (!role) return;
-    navigate(role === "admin" ? "/products" : "/", { replace: true });
+    navigate("/", { replace: true });
   }, [navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = authenticateUser(email, password);
+    const result = await authenticateUser(email, password);
 
     if (!result.ok) {
       setError("Invalid email or password");
@@ -27,7 +27,7 @@ function Login() {
     setRole(result.role);
     setUsername(result.username);
     setError("");
-    navigate(result.role === "admin" ? "/products" : "/", { replace: true });
+    navigate("/", { replace: true });
   };
 
   return (
@@ -57,7 +57,7 @@ function Login() {
 
         <div className="login-help">
           <p>Admin: harshshinde@gmail.com / password</p>
-          <p>Customer: customer@milkman.com / password</p>
+          <p>Customer: use Sign Up to create account</p>
           <p>
             New customer? <Link to="/signup">Sign Up</Link>
           </p>

@@ -1,41 +1,15 @@
+import axios from "axios";
+
 const AUTH_ROLE_KEY = "milkman_user_role";
 const LEGACY_ADMIN_SESSION_KEY = "milkman_admin_logged_in";
 const AUTH_USERNAME_KEY = "milkman_username";
-const REGISTERED_USERS_KEY = "milkman_registered_users";
 
-const ADMIN_EMAIL = "harshshinde@gmail.com";
-const ADMIN_PASSWORD = "password";
-const CUSTOMER_EMAIL = "customer@milkman.com";
-const CUSTOMER_PASSWORD = "password";
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 export const authKeys = {
   AUTH_ROLE_KEY,
   LEGACY_ADMIN_SESSION_KEY,
   AUTH_USERNAME_KEY,
-  REGISTERED_USERS_KEY,
-};
-
-export const DEFAULT_CUSTOMER = {
-  username: "customer",
-  email: CUSTOMER_EMAIL,
-  address: "Not provided",
-  mobile: "Not provided",
-};
-
-const getRegisteredUsers = () => {
-  const raw = localStorage.getItem(REGISTERED_USERS_KEY);
-  if (!raw) return [];
-
-  try {
-    const users = JSON.parse(raw);
-    return Array.isArray(users) ? users : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveRegisteredUsers = (users) => {
-  localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
 };
 
 export const getRole = () => {
@@ -73,58 +47,37 @@ export const logout = () => {
   localStorage.removeItem(AUTH_USERNAME_KEY);
 };
 
-export const authenticateUser = (email, password) => {
-  const safeEmail = (email || "").trim().toLowerCase();
-  const safePassword = (password || "").trim();
-
-  if (safeEmail === ADMIN_EMAIL && safePassword === ADMIN_PASSWORD) {
-    return { ok: true, role: "admin", username: safeEmail.split("@")[0] };
+export const authenticateUser = async (email, password) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/customers/login/`, {
+      email,
+      password,
+    });
+    return response.data;
+  } catch {
+    return { ok: false, role: null, username: null };
   }
-
-  if (safeEmail === CUSTOMER_EMAIL && safePassword === CUSTOMER_PASSWORD) {
-    return { ok: true, role: "customer", username: safeEmail.split("@")[0] };
-  }
-
-  const user = getRegisteredUsers().find(
-    (item) => item.email === safeEmail && item.password === safePassword
-  );
-  if (user) {
-    return { ok: true, role: "customer", username: user.username };
-  }
-
-  return { ok: false, role: null, username: null };
 };
 
-export const registerCustomer = ({ username, email, password, address, mobile }) => {
-  const safeUsername = (username || "").trim();
-  const safeEmail = (email || "").trim().toLowerCase();
-  const safePassword = (password || "").trim();
-  const safeAddress = (address || "").trim();
-  const safeMobile = (mobile || "").trim();
-  const users = getRegisteredUsers();
-
-  const isReservedEmail = safeEmail === ADMIN_EMAIL || safeEmail === CUSTOMER_EMAIL;
-  if (isReservedEmail || users.some((item) => item.email === safeEmail)) {
-    return { ok: false, error: "Email already registered" };
+export const registerCustomer = async ({ username, email, password, address, mobile }) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/customers/`, {
+      username,
+      email,
+      password,
+      address,
+      mobile,
+    });
+    return { ok: true, data: response.data };
+  } catch (error) {
+    const apiError = error?.response?.data;
+    if (apiError?.email) return { ok: false, error: "Email already registered" };
+    if (apiError?.username) return { ok: false, error: "Username already taken" };
+    return { ok: false, error: "Signup failed" };
   }
-
-  users.push({
-    username: safeUsername,
-    email: safeEmail,
-    password: safePassword,
-    address: safeAddress || "Not provided",
-    mobile: safeMobile || "Not provided",
-  });
-  saveRegisteredUsers(users);
-  return { ok: true };
 };
 
-export const getAllCustomers = () => {
-  const registered = getRegisteredUsers().map((item) => ({
-    username: item.username,
-    email: item.email,
-    address: item.address || "Not provided",
-    mobile: item.mobile || "Not provided",
-  }));
-  return [DEFAULT_CUSTOMER, ...registered];
+export const getAllCustomers = async () => {
+  const response = await axios.get(`${API_BASE_URL}/customers/`);
+  return response.data;
 };

@@ -6,6 +6,7 @@ from rest_framework import serializers
 from products.models import Product
 
 from .models import Order, OrderItem
+from .models import CustomerOrder
 
 
 class OrderItemWriteSerializer(serializers.Serializer):
@@ -129,3 +130,18 @@ class OrderSerializer(serializers.ModelSerializer):
             product.save(update_fields=["stock_quantity", "is_available"])
 
         return order
+
+
+class CustomerOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerOrder
+        fields = [
+            "id",
+            "customer_username",
+            "order_number",
+            "total_bill",
+            "order_date",
+            "items",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]

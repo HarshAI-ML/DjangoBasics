@@ -1,32 +1,37 @@
-const CUSTOMER_ORDERS_KEY = "milkman_customer_orders";
+import axios from "axios";
 
-const getStoredOrders = () => {
-  const raw = localStorage.getItem(CUSTOMER_ORDERS_KEY);
-  if (!raw) return {};
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-};
-
-const setStoredOrders = (value) => {
-  localStorage.setItem(CUSTOMER_ORDERS_KEY, JSON.stringify(value));
-};
-
-export const getCustomerOrders = (username) => {
+export const getCustomerOrders = async (username) => {
   if (!username) return [];
-  const all = getStoredOrders();
-  return Array.isArray(all[username]) ? all[username] : [];
+  const response = await axios.get(`${API_BASE_URL}/customer-orders/${username}/`);
+  return response.data.map((order) => ({
+    customerUsername: order.customer_username,
+    orderNumber: order.order_number,
+    totalBill: Number(order.total_bill),
+    orderDate: new Date(order.order_date).toLocaleString(),
+    rawOrderDate: order.order_date,
+    items: order.items || [],
+  }));
 };
 
-export const addCustomerOrder = (username, order) => {
+export const addCustomerOrder = async (username, order) => {
   if (!username || !order) return null;
-  const all = getStoredOrders();
-  const existing = Array.isArray(all[username]) ? all[username] : [];
-  all[username] = [order, ...existing];
-  setStoredOrders(all);
-  return order;
+  const payload = {
+    customer_username: username,
+    order_number: order.orderNumber,
+    total_bill: order.totalBill,
+    order_date: order.rawOrderDate || new Date().toISOString(),
+    items: order.items || [],
+  };
+  const response = await axios.post(`${API_BASE_URL}/customer-orders/`, payload);
+  const saved = response.data;
+  return {
+    customerUsername: saved.customer_username,
+    orderNumber: saved.order_number,
+    totalBill: Number(saved.total_bill),
+    orderDate: new Date(saved.order_date).toLocaleString(),
+    rawOrderDate: saved.order_date,
+    items: saved.items || [],
+  };
 };

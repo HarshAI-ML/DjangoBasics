@@ -1,6 +1,6 @@
 import "./Landing.css";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getRole, getUsername, isAdmin, logout } from "../utils/auth";
 import {
   addPlan,
@@ -14,15 +14,33 @@ function Landing() {
   const navigate = useNavigate();
   const [role, setRole] = useState(() => getRole());
   const [username] = useState(() => getUsername());
-  const [subscription, setSubscription] = useState(() =>
-    getCustomerSubscription(getUsername())
-  );
-  const [plans, setPlans] = useState(() => getAvailablePlans());
+  const [subscription, setSubscription] = useState(null);
+  const [plans, setPlans] = useState([]);
   const [message, setMessage] = useState("");
   const [planForm, setPlanForm] = useState({ name: "", monthlyPrice: "", quantity: "" });
 
   const adminMode = isAdmin();
   const isCustomer = role === "customer";
+
+  useEffect(() => {
+    const bootstrap = async () => {
+      try {
+        const planData = await getAvailablePlans();
+        setPlans(planData);
+      } catch {
+        setPlans([]);
+      }
+
+      if (role === "customer") {
+        const sub = await getCustomerSubscription(username);
+        setSubscription(sub);
+      } else {
+        setSubscription(null);
+      }
+    };
+
+    bootstrap();
+  }, [role, username]);
 
   const handleExplorePlans = () => {
     document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });
@@ -36,30 +54,32 @@ function Landing() {
     setMessage("");
   };
 
-  const handleSubscribe = (planId) => {
+  const handleSubscribe = async (planId) => {
     if (!isCustomer) {
       navigate("/login");
       return;
     }
 
-    const updated = subscribeCustomerToPlan(username, planId);
+    const updated = await subscribeCustomerToPlan(username, planId);
     if (!updated) return;
     setSubscription(updated);
     setMessage(`You are now subscribed to ${updated.name} plan.`);
   };
 
-  const handleAddPlan = (e) => {
+  const handleAddPlan = async (e) => {
     e.preventDefault();
-    const created = addPlan(planForm);
+    const created = await addPlan(planForm);
     if (!created) return;
-    setPlans(getAvailablePlans());
+    const refreshed = await getAvailablePlans();
+    setPlans(refreshed);
     setPlanForm({ name: "", monthlyPrice: "", quantity: "" });
     setMessage(`Plan "${created.name}" added.`);
   };
 
-  const handleDeletePlan = (planId) => {
-    deletePlan(planId);
-    setPlans(getAvailablePlans());
+  const handleDeletePlan = async (planId) => {
+    await deletePlan(planId);
+    const refreshed = await getAvailablePlans();
+    setPlans(refreshed);
     if (subscription?.id === planId) {
       setSubscription(null);
     }

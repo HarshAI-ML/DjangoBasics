@@ -1,92 +1,69 @@
-const CUSTOMER_SUBSCRIPTIONS_KEY = "milkman_customer_subscriptions";
-const PLANS_KEY = "milkman_available_plans";
-const DEFAULT_PLANS = [
-  { id: "starter", name: "Starter", monthlyPrice: 199, quantity: "500ml daily" },
-  { id: "standard", name: "Standard", monthlyPrice: 349, quantity: "1L daily" },
-  { id: "family", name: "Family", monthlyPrice: 599, quantity: "2L daily" },
-];
+import axios from "axios";
 
-const getStoredSubscriptions = () => {
-  const raw = localStorage.getItem(CUSTOMER_SUBSCRIPTIONS_KEY);
-  if (!raw) return {};
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 
+export const getAvailablePlans = async () => {
+  const response = await axios.get(`${API_BASE_URL}/plans/`);
+  return response.data.map((plan) => ({
+    id: plan.id,
+    name: plan.name,
+    monthlyPrice: Number(plan.monthly_price),
+    quantity: plan.quantity,
+  }));
+};
+
+export const addPlan = async ({ name, monthlyPrice, quantity }) => {
+  const response = await axios.post(`${API_BASE_URL}/plans/`, {
+    name,
+    monthly_price: monthlyPrice,
+    quantity,
+  });
+  return {
+    id: response.data.id,
+    name: response.data.name,
+    monthlyPrice: Number(response.data.monthly_price),
+    quantity: response.data.quantity,
+  };
+};
+
+export const deletePlan = async (planId) => {
+  await axios.delete(`${API_BASE_URL}/plans/${planId}/`);
+  return true;
+};
+
+export const getAllCustomerSubscriptions = async () => {
+  const response = await axios.get(`${API_BASE_URL}/subscriptions/`);
+  return response.data;
+};
+
+export const getCustomerSubscription = async (username) => {
   try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
+    const response = await axios.get(`${API_BASE_URL}/subscriptions/${username}/`);
+    const sub = response.data;
+    return {
+      id: sub.plan,
+      name: sub.plan_name,
+      monthlyPrice: Number(sub.monthly_price),
+      quantity: sub.quantity,
+      status: sub.status,
+      subscribedAt: sub.subscribed_at,
+    };
   } catch {
-    return {};
-  }
-};
-
-const setStoredSubscriptions = (value) => {
-  localStorage.setItem(CUSTOMER_SUBSCRIPTIONS_KEY, JSON.stringify(value));
-};
-
-export const getAvailablePlans = () => {
-  const raw = localStorage.getItem(PLANS_KEY);
-  if (!raw) return DEFAULT_PLANS;
-
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : DEFAULT_PLANS;
-  } catch {
-    return DEFAULT_PLANS;
-  }
-};
-
-const setAvailablePlans = (value) => {
-  localStorage.setItem(PLANS_KEY, JSON.stringify(value));
-};
-
-export const addPlan = ({ name, monthlyPrice, quantity }) => {
-  const safeName = (name || "").trim();
-  const safeQuantity = (quantity || "").trim();
-  const safePrice = Number(monthlyPrice);
-  if (!safeName || !safeQuantity || Number.isNaN(safePrice) || safePrice <= 0) {
     return null;
   }
-
-  const plans = getAvailablePlans();
-  const id = `plan-${Date.now()}`;
-  const created = { id, name: safeName, monthlyPrice: safePrice, quantity: safeQuantity };
-  setAvailablePlans([...plans, created]);
-  return created;
 };
 
-export const deletePlan = (planId) => {
-  const plans = getAvailablePlans().filter((plan) => plan.id !== planId);
-  setAvailablePlans(plans);
-
-  const subscriptions = getStoredSubscriptions();
-  Object.keys(subscriptions).forEach((username) => {
-    if (subscriptions[username]?.id === planId) {
-      delete subscriptions[username];
-    }
+export const subscribeCustomerToPlan = async (username, planId) => {
+  const response = await axios.post(`${API_BASE_URL}/subscriptions/${username}/`, {
+    plan: planId,
   });
-  setStoredSubscriptions(subscriptions);
-  return plans;
-};
-
-export const getAllCustomerSubscriptions = () => getStoredSubscriptions();
-
-export const getCustomerSubscription = (username) => {
-  if (!username) return null;
-  const subscriptions = getStoredSubscriptions();
-  return subscriptions[username] || null;
-};
-
-export const subscribeCustomerToPlan = (username, planId) => {
-  if (!username) return null;
-  const selectedPlan = getAvailablePlans().find((plan) => plan.id === planId);
-  if (!selectedPlan) return null;
-
-  const subscriptions = getStoredSubscriptions();
-  const payload = {
-    ...selectedPlan,
-    status: "Active",
-    subscribedAt: new Date().toISOString(),
+  const sub = response.data;
+  return {
+    id: sub.plan,
+    name: sub.plan_name,
+    monthlyPrice: Number(sub.monthly_price),
+    quantity: sub.quantity,
+    status: sub.status,
+    subscribedAt: sub.subscribed_at,
   };
-  subscriptions[username] = payload;
-  setStoredSubscriptions(subscriptions);
-  return payload;
 };

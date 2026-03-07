@@ -16,10 +16,10 @@ function Signup() {
   useEffect(() => {
     const role = getRole();
     if (!role) return;
-    navigate(role === "admin" ? "/products" : "/shop", { replace: true });
+    navigate("/", { replace: true });
   }, [navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -27,7 +27,7 @@ function Signup() {
       return;
     }
 
-    const result = registerCustomer({ username, email, address, mobile, password });
+    const result = await registerCustomer({ username, email, address, mobile, password });
     if (!result.ok) {
       setError(result.error || "Signup failed");
       return;
@@ -36,7 +36,7 @@ function Signup() {
     setRole("customer");
     setUsername(username.trim());
     setError("");
-    navigate("/shop", { replace: true });
+    navigate("/", { replace: true });
   };
 
   return (
