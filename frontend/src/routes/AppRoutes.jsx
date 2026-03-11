@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Staff from "../pages/staff";
+import Staff from "../pages/Staff";
 import Landing from "../pages/Landing";
 import Products from "../pages/Products";
 import Shop from "../pages/Shop";
