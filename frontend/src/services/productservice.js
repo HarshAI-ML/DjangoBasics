@@ -1,7 +1,7 @@
 import axios from "axios";
-
-const API_URL = "http://127.0.0.1:8000/api/products/";
-
+const BASE_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
+// const API_URL = "http://127.0.0.1:8000/api/products/";
+const API_URL = `${BASE_URL}/api/products/`
 // GET all products
 export const getProducts = async () => {
   return await axios.get(API_URL);

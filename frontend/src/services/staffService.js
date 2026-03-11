@@ -1,12 +1,15 @@
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:8000/api/staff/";
+const BASE_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
+
+const API_URL = `${BASE_URL}/api/staff/`;
 
 export const getStaff = async () => {
   return await axios.get(API_URL);
 };
 
 export const createStaff = async (data) => {
-  console.log(data,"from services file ")
+  console.log(data, "from services file");
   return await axios.post(API_URL, data);
 };
+
