@@ -5,7 +5,7 @@ const LEGACY_ADMIN_SESSION_KEY = "milkman_admin_logged_in";
 const AUTH_USERNAME_KEY = "milkman_username";
 
 // const API_BASE_URL = "http://127.0.0.1:8000/api";
-const API_BASE_URL = `${process.env.REACT_APP_API_URL || "http://127.0.0.1:8000"}/api`;
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000"}/api`;
 
 export const authKeys = {
   AUTH_ROLE_KEY,
